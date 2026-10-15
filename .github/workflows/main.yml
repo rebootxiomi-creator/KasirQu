@@ -13,4 +13,5 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KASIRQU }}'
+          projectId: kasirqu-3afe3
           channelId: live
