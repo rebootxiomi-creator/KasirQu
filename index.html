@@ -146,7 +146,7 @@
         </div>
     </div>
 
-    <div id="cloud-status" class="cloud-badge">☁️️ Terhubung ke Firebase Cloud Realtime</div>
+    <div id="cloud-status" class="cloud-badge">☁ Terhubung ke Firebase Cloud Realtime</div>
 
     <!-- Navigasi Utama -->
     <nav>
@@ -461,8 +461,12 @@
                     <input type="text" id="setting-store-phone" placeholder="08123456789" style="width:100%; margin-top:4px;">
                 </div>
                 <div style="margin-bottom:12px;">
-                    <label style="font-size:0.85rem; font-weight:bold;">URL Logo Toko (Gambar):</label>
-                    <input type="url" id="setting-store-logo" placeholder="https://example.com/logo.png" style="width:100%; margin-top:4px;">
+                    <label style="font-size:0.85rem; font-weight:bold;">Upload Logo Toko (File Gambar):</label>
+                    <input type="file" id="setting-store-logo-file" accept="image/*" onchange="previewLogoFile(this)" style="width:100%; margin-top:4px; padding:6px; background:#fff;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:0.85rem; font-weight:bold;">URL Logo Toko (atau Hasil Upload File):</label>
+                    <input type="text" id="setting-store-logo" placeholder="https://example.com/logo.png" style="width:100%; margin-top:4px;">
                 </div>
                 <div style="margin-bottom:15px;">
                     <label style="font-size:0.85rem; font-weight:bold;">Prefiks SKU Otomatis:</label>
@@ -760,6 +764,16 @@
                     generateNextSKU();
                 }
             });
+        }
+
+        function previewLogoFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('setting-store-logo').value = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
         function calculateTotalInventoryValue() {
@@ -1162,7 +1176,6 @@
                 return dStr;
             }
 
-            // Filter transaksi berdasarkan rentang tanggal
             let filteredTrx = transactions.filter(t => {
                 let normDate = normalizeDate(t);
                 if (!normDate) return true;
@@ -1288,7 +1301,7 @@
             transactions.forEach(t => {
                 let dStr = t.dateStr || '';
                 if (dStr.includes('-')) {
-                    let p = dStr.split('-');
+                    let p = t.dateStr.split('-');
                     if (p.length === 3) dStr = `${p[2]}/${p[1]}/${p[0]}`;
                 }
                 csvContent += `${t.trxId || t.id},${dStr},${t.customer || '-'},${getTrxTotal(t)},${getTrxCost(t)},${getTrxProfit(t)}\n`;
