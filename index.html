@@ -527,10 +527,10 @@
         let transactions = [];
         let cart = [];
         let currentUserRole = 'kasir';
-// 1. Ambil data dari dokumen tunggal 'main_data' di dalam koleksi 'pos_store'
-db.collection("pos_store").doc("main_data").get()
-  .then((doc) => {
-      if (doc.exists) {
+          // 1. Ambil data dari dokumen tunggal 'main_data' di dalam koleksi 'pos_store'
+          db.collection("pos_store").doc("main_data").get()
+          .then((doc) => {
+          if (doc.exists) {
           const data = doc.data();
           
           // 2. Masukkan array products dari database ke variabel 'products' aplikasi POS Anda
@@ -657,24 +657,45 @@ db.collection("pos_store").doc("main_data").get()
             if (skuInput) skuInput.value = prefix + formattedNum;
         }
 
-         function checkSession() {
+                 function checkSession() {
             const savedRole = localStorage.getItem('pos_user_role');
-            const loginOverlay = document.getElementById('login-overlay');
+            const overlay = document.getElementById('login-overlay');
             
-            if (savedRole && (savedRole === 'admin' || savedRole === 'kasir')) {
+            if (savedRole === 'admin' || savedRole === 'kasir') {
                 currentUserRole = savedRole;
-                if (loginOverlay) {
-                    loginOverlay.style.display = 'none';
-                    loginOverlay.remove(); // Bersihkan elemen dari DOM
+                if (overlay) {
+                    overlay.remove(); // Hapus total elemen login jika sesi sudah ada
                 }
                 updateUIByRole();
             } else {
-                localStorage.removeItem('pos_user_role'); // Bersihkan jika tidak valid
-                if (loginOverlay) {
-                    loginOverlay.style.display = 'flex';
+                if (overlay) {
+                    overlay.style.display = 'flex';
                 }
             }
         }
+
+        function handleLogin(e) {
+            if (e) e.preventDefault();
+            
+            const role = document.getElementById('login-role').value;
+            const pass = document.getElementById('login-pass').value;
+
+            if ((role === 'admin' && pass === 'admin123') || (role === 'kasir' && pass === 'kasir123')) {
+                currentUserRole = role;
+                localStorage.setItem('pos_user_role', role);
+                
+                const overlay = document.getElementById('login-overlay');
+                if (overlay) {
+                    overlay.remove(); // Hapus paksa elemen overlay saat tombol diklik
+                }
+                
+                updateUIByRole();
+                switchTab('kasir', document.querySelector('.tab-btn'));
+            } else {
+                alert('Password salah!');
+            }
+        }
+
         function executeLogin() {
             const role = document.getElementById('login-role').value;
             const pass = document.getElementById('login-pass').value;
