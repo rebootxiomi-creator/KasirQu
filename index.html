@@ -730,61 +730,71 @@
                 }
             }, err => {});
 
-            // Ambil produk & pengaturan dari dokumen tunggal 'pos_store' -> 'main_data'
-            db.collection('pos_store').doc('main_data').onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    products = data.products || [];
-                    
-                    // Ekstrak pengaturan toko dari map 'settings' di dalam dokumen main_data
-                    if (data.settings) {
-                        const st = data.settings;
-                        const storeName = st.storeName || st.name || 'Toko Kasir Saya';
-                        const storeAddress = st.storeAddress || st.address || '';
-                        const storePhone = st.storePhone || st.phone || '';
-                        const storeLogo = st.storeLogo || st.logo || '';
-                        const productPrefix = st.productPrefix || st.skuPrefix || 'SKU-';
+                    // Ambil produk & pengaturan dari dokumen tunggal 'pos_store' -> 'main_data'
+        db.collection('pos_store').doc('main_data').onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                
+                // 1. Petakan seluruh produk dari array dengan benar (mendukung buyPrice & sellPrice)
+                const rawProducts = data.products || [];
+                products = rawProducts.map(p => ({
+                    id: p.id || '',
+                    sku: p.id || p.sku || 'SKU',
+                    name: p.name || '',
+                    cost: parseFloat(p.buyPrice || p.cost || p.hargaBeli || p.modal || 0),
+                    price: parseFloat(p.sellPrice || p.price || p.hargaJual || 0),
+                    stock: parseInt(p.stock || p.stok || 0)
+                }));
+                
+                // 2. Ekstrak pengaturan toko secara fleksibel (mendukung struktur root atau map settings)
+                const st = data.settings || data; 
+                const storeName = st.storeName || st.name || st.cashierName || 'Toko Kasir Saya';
+                const storeAddress = st.storeAddress || st.address || '';
+                const storePhone = st.storePhone || st.phone || '';
+                const storeLogo = st.storeLogo || st.logo || '';
+                const productPrefix = st.productPrefix || st.skuPrefix || 'ID';
 
-                        document.getElementById('nav-title-text').innerText = storeName;
-                        const nameEl = document.getElementById('setting-store-name');
-                        if (nameEl) nameEl.value = storeName;
-                        
-                        const addrEl = document.getElementById('setting-store-address');
-                        if (addrEl) addrEl.value = storeAddress;
-                        
-                        const phoneEl = document.getElementById('setting-store-phone');
-                        if (phoneEl) phoneEl.value = storePhone;
-                        
-                        const logoEl = document.getElementById('setting-store-logo');
-                        if (logoEl) logoEl.value = storeLogo;
-                        
-                        const prefixEl = document.getElementById('setting-sku-prefix');
-                        if (prefixEl) prefixEl.value = productPrefix;
-                        
-                        if (storeLogo) {
-                            const img = document.getElementById('nav-logo');
-                            img.src = storeLogo;
-                            img.style.display = 'inline-block';
-                        }
-                    }
-                } else {
-                    products = [];
+                document.getElementById('nav-title-text').innerText = storeName;
+                
+                const nameEl = document.getElementById('setting-store-name');
+                if (nameEl) nameEl.value = storeName;
+                
+                const addrEl = document.getElementById('setting-store-address');
+                if (addrEl) addrEl.value = storeAddress;
+                
+                const phoneEl = document.getElementById('setting-store-phone');
+                if (phoneEl) phoneEl.value = storePhone;
+                
+                const logoEl = document.getElementById('setting-store-logo');
+                if (logoEl) logoEl.value = storeLogo;
+                
+                const prefixEl = document.getElementById('setting-sku-prefix');
+                if (prefixEl) prefixEl.value = productPrefix;
+                
+                if (storeLogo) {
+                    const img = document.getElementById('nav-logo');
+                    img.src = storeLogo;
+                    img.style.display = 'inline-block';
                 }
-                localStorage.setItem('pos_products_cache', JSON.stringify(products));
+            } else {
+                products = [];
+            }
+            
+            localStorage.setItem('pos_products_cache', JSON.stringify(products));
+            renderProducts();
+            renderProductTable();
+            calculateTotalInventoryValue();
+            generateNextSKU();
+        }, err => {
+            const cached = localStorage.getItem('pos_products_cache');
+            if (cached) {
+                products = JSON.parse(cached);
                 renderProducts();
                 renderProductTable();
                 calculateTotalInventoryValue();
                 generateNextSKU();
-            }, err => {
-                const cached = localStorage.getItem('pos_products_cache');
-                if (cached) {
-                    products = JSON.parse(cached);
-                    renderProducts();
-                    renderProductTable();
-                    calculateTotalInventoryValue();
-                    generateNextSKU();
-                }
-            });
+            }
+        });
 
             // Ambil riwayat transaksi dari koleksi terpisah 'transactions'
             db.collection('transactions').onSnapshot(snapshot => {
