@@ -527,59 +527,6 @@
         let cart = [];
         let currentUserRole = 'kasir';
 
-         // 1. Ambil data awal produk dan pengaturan dari dokumen tunggal 'pos_store/main_data'
-        db.collection("pos_store").doc("main_data").get()
-        .then((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                
-                // Ambil produk
-                products = data.products || []; 
-                if (typeof renderProducts === 'function') {
-                    renderProducts(products);
-                }
-
-                // Ambil pengaturan toko jika ada di dalam map 'settings'
-                if (data.settings) {
-                    const st = data.settings;
-                    const nameEl = document.getElementById('setting-store-name');
-                    if (nameEl) {
-                        document.getElementById('nav-title-text').innerText = st.storeName || st.name || 'Toko Kasir Saya';
-                        nameEl.value = st.storeName || st.name || '';
-                        document.getElementById('setting-store-address').value = st.storeAddress || st.address || '';
-                        document.getElementById('setting-store-phone').value = st.storePhone || st.phone || '';
-                        document.getElementById('setting-store-logo').value = st.storeLogo || st.logo || '';
-                        document.getElementById('setting-sku-prefix').value = st.productPrefix || st.skuPrefix || 'SKU-';
-                        
-                        if (st.storeLogo || st.logo) {
-                            const img = document.getElementById('nav-logo');
-                            img.src = st.storeLogo || st.logo;
-                            img.style.display = 'inline-block';
-                        }
-                    }
-                }
-                generateNextSKU();
-            }
-        })
-        .catch((error) => {
-            console.error("Gagal mengambil data main_data: ", error);
-        });
-
-        // 2. Ambil data awal riwayat transaksi dari koleksi 'transactions'
-        db.collection("transactions").get()
-        .then((snapshot) => {
-            transactions = [];
-            snapshot.forEach(doc => {
-                transactions.push({ id: doc.id, ...doc.data() });
-            });
-            transactions.sort((a, b) => getTrxSortDate(b) - getTrxSortDate(a));
-            if (typeof renderTransactions === 'function') renderTransactions();
-            if (typeof renderDashboard === 'function') renderDashboard();
-        })
-        .catch((error) => {
-            console.error("Gagal mengambil data transaksi: ", error);
-        });
-
         function formatRp(num) {
             return 'Rp ' + (num || 0).toLocaleString('id-ID');
         }
@@ -770,6 +717,7 @@
             }
         }
 
+        // FUNGSI UTAMA PENGAMBILAN DATA REALTIME DARI STRUKTUR BERSARANG FIREBASE
         function initListeners() {
             db.doc('.info/connected').onSnapshot(snap => {
                 const badge = document.getElementById('cloud-status');
@@ -782,10 +730,43 @@
                 }
             }, err => {});
 
+            // Ambil produk & pengaturan dari dokumen tunggal 'pos_store' -> 'main_data'
             db.collection('pos_store').doc('main_data').onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     products = data.products || [];
+                    
+                    // Ekstrak pengaturan toko dari map 'settings' di dalam dokumen main_data
+                    if (data.settings) {
+                        const st = data.settings;
+                        const storeName = st.storeName || st.name || 'Toko Kasir Saya';
+                        const storeAddress = st.storeAddress || st.address || '';
+                        const storePhone = st.storePhone || st.phone || '';
+                        const storeLogo = st.storeLogo || st.logo || '';
+                        const productPrefix = st.productPrefix || st.skuPrefix || 'SKU-';
+
+                        document.getElementById('nav-title-text').innerText = storeName;
+                        const nameEl = document.getElementById('setting-store-name');
+                        if (nameEl) nameEl.value = storeName;
+                        
+                        const addrEl = document.getElementById('setting-store-address');
+                        if (addrEl) addrEl.value = storeAddress;
+                        
+                        const phoneEl = document.getElementById('setting-store-phone');
+                        if (phoneEl) phoneEl.value = storePhone;
+                        
+                        const logoEl = document.getElementById('setting-store-logo');
+                        if (logoEl) logoEl.value = storeLogo;
+                        
+                        const prefixEl = document.getElementById('setting-sku-prefix');
+                        if (prefixEl) prefixEl.value = productPrefix;
+                        
+                        if (storeLogo) {
+                            const img = document.getElementById('nav-logo');
+                            img.src = storeLogo;
+                            img.style.display = 'inline-block';
+                        }
+                    }
                 } else {
                     products = [];
                 }
@@ -805,6 +786,7 @@
                 }
             });
 
+            // Ambil riwayat transaksi dari koleksi terpisah 'transactions'
             db.collection('transactions').onSnapshot(snapshot => {
                 transactions = [];
                 snapshot.forEach(doc => {
@@ -815,25 +797,6 @@
                 renderTransactions();
                 renderDashboard();
             }, err => {});
-
-            db.collection('settings').doc('store').onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('nav-title-text').innerText = data.name || 'Toko Kasir Saya';
-                    document.getElementById('setting-store-name').value = data.name || '';
-                    document.getElementById('setting-store-address').value = data.address || '';
-                    document.getElementById('setting-store-phone').value = data.phone || '';
-                    document.getElementById('setting-store-logo').value = data.logo || '';
-                    document.getElementById('setting-sku-prefix').value = data.skuPrefix || 'SKU-';
-                    
-                    if (data.logo) {
-                        const img = document.getElementById('nav-logo');
-                        img.src = data.logo;
-                        img.style.display = 'inline-block';
-                    }
-                    generateNextSKU();
-                }
-            });
         }
 
         function previewLogoFile(input) {
@@ -1381,14 +1344,18 @@
         async function saveStoreSettings(e) {
             e.preventDefault();
             const data = {
-                name: document.getElementById('setting-store-name').value,
-                address: document.getElementById('setting-store-address').value,
-                phone: document.getElementById('setting-store-phone').value,
-                logo: document.getElementById('setting-store-logo').value,
-                skuPrefix: document.getElementById('setting-sku-prefix').value
+                storeName: document.getElementById('setting-store-name').value,
+                storeAddress: document.getElementById('setting-store-address').value,
+                storePhone: document.getElementById('setting-store-phone').value,
+                storeLogo: document.getElementById('setting-store-logo').value,
+                productPrefix: document.getElementById('setting-sku-prefix').value
             };
 
-            await db.collection('settings').doc('store').set(data, { merge: true });
+            // Simpan ke dalam map 'settings' di dalam dokumen tunggal 'pos_store/main_data'
+            await db.collection('pos_store').doc('main_data').set({
+                settings: data
+            }, { merge: true });
+
             generateNextSKU();
             alert('Pengaturan toko berhasil disimpan ke Cloud!');
         }
