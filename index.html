@@ -657,14 +657,15 @@ db.collection("pos_store").doc("main_data").get()
             if (skuInput) skuInput.value = prefix + formattedNum;
         }
 
-        function checkSession() {
+                function checkSession() {
             const savedRole = localStorage.getItem('pos_user_role');
-            if (savedRole) {
+            const loginOverlay = document.getElementById('login-overlay');
+            if (savedRole && loginOverlay) {
                 currentUserRole = savedRole;
-                document.getElementById('login-overlay').style.display = 'none';
+                loginOverlay.style.display = 'none';
                 updateUIByRole();
-            } else {
-                document.getElementById('login-overlay').style.display = 'flex';
+            } else if (loginOverlay) {
+                loginOverlay.style.display = 'flex';
             }
         }
 
@@ -676,12 +677,18 @@ db.collection("pos_store").doc("main_data").get()
             if ((role === 'admin' && pass === 'admin123') || (role === 'kasir' && pass === 'kasir123')) {
                 currentUserRole = role;
                 localStorage.setItem('pos_user_role', role);
-                document.getElementById('login-overlay').style.display = 'none';
+                
+                const loginOverlay = document.getElementById('login-overlay');
+                if (loginOverlay) {
+                    loginOverlay.style.display = 'none';
+                }
                 updateUIByRole();
+                switchTab('kasir', document.querySelector('.tab-btn.active') || document.querySelector('.tab-btn'));
             } else {
                 alert('Password salah!');
             }
         }
+
 
         function handleLogout() {
             localStorage.removeItem('pos_user_role');
