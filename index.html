@@ -128,23 +128,24 @@
 </head>
 <body>
 
-    <!-- OVERLAY LOGIN -->
+        <!-- OVERLAY LOGIN -->
     <div id="login-overlay">
         <div class="login-card">
             <h2>🔑 Login Kasir Pro</h2>
-            <form onsubmit="handleLogin(event)">
+            <div>
                 <select id="login-role">
                     <option value="kasir">Kasir</option>
                     <option value="admin">Admin</option>
                 </select>
-                <input type="password" id="login-pass" placeholder="Masukkan Password" autocomplete="current-password" required>
-                <button type="submit">Masuk Aplikasi</button>
-            </form>
+                <input type="password" id="login-pass" placeholder="Masukkan Password" autocomplete="current-password">
+                <button type="button" onclick="handleLoginClick()">Masuk Aplikasi</button>
+            </div>
             <p style="font-size:0.75rem; color:#7f8c8d; margin-top:12px;">
                 Password Default:<br>Admin: <b>admin123</b> | Kasir: <b>kasir123</b>
             </p>
         </div>
     </div>
+
 
     <div id="cloud-status" class="cloud-badge">☁ Terhubung ke Firebase Cloud Realtime</div>
 
@@ -657,7 +658,7 @@ db.collection("pos_store").doc("main_data").get()
             if (skuInput) skuInput.value = prefix + formattedNum;
         }
 
-                function checkSession() {
+       function checkSession() {
             const savedRole = localStorage.getItem('pos_user_role');
             const loginOverlay = document.getElementById('login-overlay');
             if (savedRole && loginOverlay) {
@@ -670,9 +671,16 @@ db.collection("pos_store").doc("main_data").get()
         }
 
         function handleLogin(e) {
-            e.preventDefault();
-            const role = document.getElementById('login-role').value;
-            const pass = document.getElementById('login-pass').value;
+            if (e && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
+            
+            const roleEl = document.getElementById('login-role');
+            const passEl = document.getElementById('login-pass');
+            if (!roleEl || !passEl) return;
+
+            const role = roleEl.value;
+            const pass = passEl.value;
 
             if ((role === 'admin' && pass === 'admin123') || (role === 'kasir' && pass === 'kasir123')) {
                 currentUserRole = role;
@@ -683,7 +691,7 @@ db.collection("pos_store").doc("main_data").get()
                     loginOverlay.style.display = 'none';
                 }
                 updateUIByRole();
-                switchTab('kasir', document.querySelector('.tab-btn.active') || document.querySelector('.tab-btn'));
+                switchTab('kasir', document.querySelector('.tab-btn'));
             } else {
                 alert('Password salah!');
             }
