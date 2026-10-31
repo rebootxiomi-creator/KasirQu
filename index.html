@@ -658,7 +658,7 @@ db.collection("pos_store").doc("main_data").get()
             if (skuInput) skuInput.value = prefix + formattedNum;
         }
 
-       function checkSession() {
+        function checkSession() {
             const savedRole = localStorage.getItem('pos_user_role');
             const loginOverlay = document.getElementById('login-overlay');
             if (savedRole && loginOverlay) {
@@ -686,17 +686,19 @@ db.collection("pos_store").doc("main_data").get()
                 currentUserRole = role;
                 localStorage.setItem('pos_user_role', role);
                 
+                // Paksa hilangkan elemen overlay login secara langsung
                 const loginOverlay = document.getElementById('login-overlay');
                 if (loginOverlay) {
                     loginOverlay.style.display = 'none';
+                    loginOverlay.remove(); // Hapus elemen dari DOM agar tidak menutupi layar
                 }
+                
                 updateUIByRole();
                 switchTab('kasir', document.querySelector('.tab-btn'));
             } else {
                 alert('Password salah!');
             }
         }
-
 
         function handleLogout() {
             localStorage.removeItem('pos_user_role');
