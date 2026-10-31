@@ -128,7 +128,7 @@
 </head>
 <body>
 
-            <!-- OVERLAY LOGIN -->
+    <!-- OVERLAY LOGIN -->
     <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; z-index: 9999; display: flex; justify-content: center; align-items: center;">
         <div class="login-card">
             <h2>🔑 Login Kasir Pro</h2>
@@ -396,7 +396,6 @@
 
     <!-- 4. HALAMAN LAPORAN -->
     <div id="page-laporan" class="page">
-        <!-- 4 KOTAK RINGKASAN KEUANGAN DENGAN BORDER KIRI -->
         <div class="fin-grid">
             <div class="fin-box" style="border-left: 4px solid #2980b9;">
                 <h3>TOTAL OMSET</h3>
@@ -527,30 +526,21 @@
         let transactions = [];
         let cart = [];
         let currentUserRole = 'kasir';
-          // 1. Ambil data dari dokumen tunggal 'main_data' di dalam koleksi 'pos_store'
-          db.collection("pos_store").doc("main_data").get()
-          .then((doc) => {
-          if (doc.exists) {
-          const data = doc.data();
-          
-          // 2. Masukkan array products dari database ke variabel 'products' aplikasi POS Anda
-          products = data.products || []; 
-          console.log("Data produk berhasil dimuat:", products);
-          
-          // 3. Panggil fungsi untuk merender/menampilkan produk-produk tersebut ke layar POS
-          // (Sesuaikan nama fungsi render di bawah ini dengan fungsi yang sudah ada di script Anda)
-          if (typeof renderProducts === 'function') {
-              renderProducts(products);
-          } else if (typeof displayProducts === 'function') {
-              displayProducts(products);
-          }
-      } else {
-          console.log("Dokumen main_data tidak ditemukan di pos_store!");
-      }
-  })
-  .catch((error) => {
-      console.error("Gagal mengambil data dari Firebase: ", error);
-  });
+
+        // Ambil data awal dari dokumen tunggal 'main_data'
+        db.collection("pos_store").doc("main_data").get()
+        .then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                products = data.products || []; 
+                if (typeof renderProducts === 'function') {
+                    renderProducts(products);
+                }
+            }
+        })
+        .catch((error) => {
+            console.error("Gagal mengambil data dari Firebase: ", error);
+        });
 
         function formatRp(num) {
             return 'Rp ' + (num || 0).toLocaleString('id-ID');
@@ -657,42 +647,20 @@
             if (skuInput) skuInput.value = prefix + formattedNum;
         }
 
-                 function checkSession() {
+        function checkSession() {
             const savedRole = localStorage.getItem('pos_user_role');
             const overlay = document.getElementById('login-overlay');
             
             if (savedRole === 'admin' || savedRole === 'kasir') {
                 currentUserRole = savedRole;
                 if (overlay) {
-                    overlay.remove(); // Hapus total elemen login jika sesi sudah ada
+                    overlay.remove(); 
                 }
                 updateUIByRole();
             } else {
                 if (overlay) {
                     overlay.style.display = 'flex';
                 }
-            }
-        }
-
-        function handleLogin(e) {
-            if (e) e.preventDefault();
-            
-            const role = document.getElementById('login-role').value;
-            const pass = document.getElementById('login-pass').value;
-
-            if ((role === 'admin' && pass === 'admin123') || (role === 'kasir' && pass === 'kasir123')) {
-                currentUserRole = role;
-                localStorage.setItem('pos_user_role', role);
-                
-                const overlay = document.getElementById('login-overlay');
-                if (overlay) {
-                    overlay.remove(); // Hapus paksa elemen overlay saat tombol diklik
-                }
-                
-                updateUIByRole();
-                switchTab('kasir', document.querySelector('.tab-btn'));
-            } else {
-                alert('Password salah!');
             }
         }
 
@@ -704,7 +672,6 @@
                 currentUserRole = role;
                 localStorage.setItem('pos_user_role', role);
                 
-                // Hapus total elemen overlay dari halaman
                 const overlay = document.getElementById('login-overlay');
                 if (overlay) {
                     overlay.remove();
@@ -717,7 +684,6 @@
             }
         }
 
-        // Pertahankan fungsi lama jaga-jaga dipanggil tempat lain
         function handleLogin(e) {
             if (e) e.preventDefault();
             executeLogin();
@@ -766,7 +732,7 @@
             }
         }
 
-                function initListeners() {
+        function initListeners() {
             db.doc('.info/connected').onSnapshot(snap => {
                 const badge = document.getElementById('cloud-status');
                 if (snap && snap.data() && snap.data().val === false) {
@@ -778,7 +744,6 @@
                 }
             }, err => {});
 
-            // PERBAIKAN: Ambil produk dari dokumen tunggal bersarang pos_store -> main_data
             db.collection('pos_store').doc('main_data').onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -801,38 +766,6 @@
                     generateNextSKU();
                 }
             });
-
-            db.collection('transactions').onSnapshot(snapshot => {
-                transactions = [];
-                snapshot.forEach(doc => {
-                    transactions.push({ id: doc.id, ...doc.data() });
-                });
-                transactions.sort((a, b) => getTrxSortDate(b) - getTrxSortDate(a));
-
-                renderTransactions();
-                renderDashboard();
-            }, err => {});
-
-            db.collection('settings').doc('store').onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('nav-title-text').innerText = data.name || 'Toko Kasir Saya';
-                    document.getElementById('setting-store-name').value = data.name || '';
-                    document.getElementById('setting-store-address').value = data.address || '';
-                    document.getElementById('setting-store-phone').value = data.phone || '';
-                    document.getElementById('setting-store-logo').value = data.logo || '';
-                    document.getElementById('setting-sku-prefix').value = data.skuPrefix || 'SKU-';
-                    
-                    if (data.logo) {
-                        const img = document.getElementById('nav-logo');
-                        img.src = data.logo;
-                        img.style.display = 'inline-block';
-                    }
-                    generateNextSKU();
-                }
-            });
-        }
-
 
             db.collection('transactions').onSnapshot(snapshot => {
                 transactions = [];
@@ -1039,13 +972,6 @@
 
             try {
                 await db.collection('transactions').add(transactionData);
-
-                const batch = db.batch();
-                cart.forEach(item => {
-                    const ref = db.collection('products').doc(item.id);
-                    batch.update(ref, { stock: firebase.firestore.FieldValue.increment(-item.qty) });
-                });
-                await batch.commit();
 
                 let printTrx = { ...transactionData, dateStr: `${day}/${month}/${year}` };
                 printReceipt(printTrx);
