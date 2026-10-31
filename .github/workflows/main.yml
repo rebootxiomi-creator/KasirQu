@@ -9,10 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@master
         with:
-          repoToken: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KASIRQU }}'
-          firebaseServiceAccount: ''
-          projectId: kasirqu-3afe3
-          channelId: live
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
