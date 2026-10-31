@@ -527,19 +527,51 @@
         let cart = [];
         let currentUserRole = 'kasir';
 
-        // Ambil data awal dari dokumen tunggal 'main_data'
+                // 1. Ambil data awal produk dan pengaturan dari dokumen tunggal 'pos_store/main_data'
         db.collection("pos_store").doc("main_data").get()
         .then((doc) => {
             if (doc.exists) {
                 const data = doc.data();
+                
+                // Ambil produk
                 products = data.products || []; 
                 if (typeof renderProducts === 'function') {
                     renderProducts(products);
                 }
+
+                // Ambil pengaturan toko jika ada di dalam map 'settings'
+                if (data.settings) {
+                    const st = data.settings;
+                    const nameEl = document.getElementById('setting-store-name');
+                    if (nameEl) {
+                        document.getElementById('nav-title-text').innerText = st.storeName || st.name || 'Toko Kasir Saya';
+                        nameEl.value = st.storeName || st.name || '';
+                        document.getElementById('setting-store-address').value = st.storeAddress || st.address || '';
+                        document.getElementById('setting-store-phone').value = st.storePhone || st.phone || '';
+                        document.getElementById('setting-store-logo').value = st.storeLogo || st.logo || '';
+                        document.getElementById('setting-sku-prefix').value = st.productPrefix || st.skuPrefix || 'SKU-';
+                    }
+                }
+                generateNextSKU();
             }
         })
         .catch((error) => {
-            console.error("Gagal mengambil data dari Firebase: ", error);
+            console.error("Gagal mengambil data main_data: ", error);
+        });
+
+        // Ambil data awal riwayat transaksi dari koleksi 'transactions'
+        db.collection("transactions").get()
+        .then((snapshot) => {
+            transactions = [];
+            snapshot.forEach(doc => {
+                transactions.push({ id: doc.id, ...doc.data() });
+            });
+            transactions.sort((a, b) => getTrxSortDate(b) - getTrxSortDate(a));
+            if (typeof renderTransactions === 'function') renderTransactions();
+            if (typeof renderDashboard === 'function') renderDashboard();
+        })
+        .catch((error) => {
+            console.error("Gagal mengambil data transaksi: ", error);
         });
 
         function formatRp(num) {
