@@ -726,7 +726,7 @@ db.collection("pos_store").doc("main_data").get()
             }
         }
 
-        function initListeners() {
+                function initListeners() {
             db.doc('.info/connected').onSnapshot(snap => {
                 const badge = document.getElementById('cloud-status');
                 if (snap && snap.data() && snap.data().val === false) {
@@ -738,11 +738,14 @@ db.collection("pos_store").doc("main_data").get()
                 }
             }, err => {});
 
-            db.collection('products').onSnapshot(snapshot => {
-                products = [];
-                snapshot.forEach(doc => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
+            // PERBAIKAN: Ambil produk dari dokumen tunggal bersarang pos_store -> main_data
+            db.collection('pos_store').doc('main_data').onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    products = data.products || [];
+                } else {
+                    products = [];
+                }
                 localStorage.setItem('pos_products_cache', JSON.stringify(products));
                 renderProducts();
                 renderProductTable();
@@ -758,6 +761,38 @@ db.collection("pos_store").doc("main_data").get()
                     generateNextSKU();
                 }
             });
+
+            db.collection('transactions').onSnapshot(snapshot => {
+                transactions = [];
+                snapshot.forEach(doc => {
+                    transactions.push({ id: doc.id, ...doc.data() });
+                });
+                transactions.sort((a, b) => getTrxSortDate(b) - getTrxSortDate(a));
+
+                renderTransactions();
+                renderDashboard();
+            }, err => {});
+
+            db.collection('settings').doc('store').onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('nav-title-text').innerText = data.name || 'Toko Kasir Saya';
+                    document.getElementById('setting-store-name').value = data.name || '';
+                    document.getElementById('setting-store-address').value = data.address || '';
+                    document.getElementById('setting-store-phone').value = data.phone || '';
+                    document.getElementById('setting-store-logo').value = data.logo || '';
+                    document.getElementById('setting-sku-prefix').value = data.skuPrefix || 'SKU-';
+                    
+                    if (data.logo) {
+                        const img = document.getElementById('nav-logo');
+                        img.src = data.logo;
+                        img.style.display = 'inline-block';
+                    }
+                    generateNextSKU();
+                }
+            });
+        }
+
 
             db.collection('transactions').onSnapshot(snapshot => {
                 transactions = [];
