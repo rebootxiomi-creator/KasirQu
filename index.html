@@ -527,6 +527,30 @@
         let transactions = [];
         let cart = [];
         let currentUserRole = 'kasir';
+// 1. Ambil data dari dokumen tunggal 'main_data' di dalam koleksi 'pos_store'
+db.collection("pos_store").doc("main_data").get()
+  .then((doc) => {
+      if (doc.exists) {
+          const data = doc.data();
+          
+          // 2. Masukkan array products dari database ke variabel 'products' aplikasi POS Anda
+          products = data.products || []; 
+          console.log("Data produk berhasil dimuat:", products);
+          
+          // 3. Panggil fungsi untuk merender/menampilkan produk-produk tersebut ke layar POS
+          // (Sesuaikan nama fungsi render di bawah ini dengan fungsi yang sudah ada di script Anda)
+          if (typeof renderProducts === 'function') {
+              renderProducts(products);
+          } else if (typeof displayProducts === 'function') {
+              displayProducts(products);
+          }
+      } else {
+          console.log("Dokumen main_data tidak ditemukan di pos_store!");
+      }
+  })
+  .catch((error) => {
+      console.error("Gagal mengambil data dari Firebase: ", error);
+  });
 
         function formatRp(num) {
             return 'Rp ' + (num || 0).toLocaleString('id-ID');
