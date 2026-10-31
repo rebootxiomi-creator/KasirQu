@@ -658,17 +658,25 @@ db.collection("pos_store").doc("main_data").get()
             if (skuInput) skuInput.value = prefix + formattedNum;
         }
 
-        function checkSession() {
+         function checkSession() {
             const savedRole = localStorage.getItem('pos_user_role');
             const loginOverlay = document.getElementById('login-overlay');
-            if (savedRole && loginOverlay) {
+            
+            if (savedRole && (savedRole === 'admin' || savedRole === 'kasir')) {
                 currentUserRole = savedRole;
-                loginOverlay.style.display = 'none';
+                if (loginOverlay) {
+                    loginOverlay.style.display = 'none';
+                    loginOverlay.remove(); // Bersihkan elemen dari DOM
+                }
                 updateUIByRole();
-            } else if (loginOverlay) {
-                loginOverlay.style.display = 'flex';
+            } else {
+                localStorage.removeItem('pos_user_role'); // Bersihkan jika tidak valid
+                if (loginOverlay) {
+                    loginOverlay.style.display = 'flex';
+                }
             }
         }
+
 
         function handleLogin(e) {
             if (e && typeof e.preventDefault === 'function') {
