@@ -527,7 +527,7 @@
         let cart = [];
         let currentUserRole = 'kasir';
 
-                // 1. Ambil data awal produk dan pengaturan dari dokumen tunggal 'pos_store/main_data'
+         // 1. Ambil data awal produk dan pengaturan dari dokumen tunggal 'pos_store/main_data'
         db.collection("pos_store").doc("main_data").get()
         .then((doc) => {
             if (doc.exists) {
@@ -550,6 +550,12 @@
                         document.getElementById('setting-store-phone').value = st.storePhone || st.phone || '';
                         document.getElementById('setting-store-logo').value = st.storeLogo || st.logo || '';
                         document.getElementById('setting-sku-prefix').value = st.productPrefix || st.skuPrefix || 'SKU-';
+                        
+                        if (st.storeLogo || st.logo) {
+                            const img = document.getElementById('nav-logo');
+                            img.src = st.storeLogo || st.logo;
+                            img.style.display = 'inline-block';
+                        }
                     }
                 }
                 generateNextSKU();
@@ -559,7 +565,7 @@
             console.error("Gagal mengambil data main_data: ", error);
         });
 
-        // Ambil data awal riwayat transaksi dari koleksi 'transactions'
+        // 2. Ambil data awal riwayat transaksi dari koleksi 'transactions'
         db.collection("transactions").get()
         .then((snapshot) => {
             transactions = [];
